@@ -71,7 +71,13 @@ public class MenuUsuario extends JFrame implements ActionListener {
         if (ae.getSource() == nuevoJuegoButton) {
             // Iniciar un nuevo juego
             JOptionPane.showMessageDialog(this, "Iniciar un nuevo juego", "Nuevo Juego", JOptionPane.INFORMATION_MESSAGE);
-        
+            JFrame frame = new JFrame("Space Invaders");
+            SpaceInvaders game = new SpaceInvaders();
+            frame.add(game);
+            frame.setSize(1200, 650);
+            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+            frame.setResizable(false);
+            frame.setVisible(true);
         } else if (ae.getSource() == cargarJuegoButton) {
             // Cargar un juego existente
             JOptionPane.showMessageDialog(this, "Cargar un juego existente", "Cargar Juego", JOptionPane.INFORMATION_MESSAGE);
