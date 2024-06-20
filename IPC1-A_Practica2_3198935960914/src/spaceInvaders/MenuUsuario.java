@@ -27,7 +27,7 @@ public class MenuUsuario extends JFrame implements ActionListener {
         setContentPane(backgroundPanel);
 
         // Cargar la imagen del título y redimensionarla
-        ImageIcon titleIcon = new ImageIcon(getClass().getResource("../imgs/title.png"));
+        ImageIcon titleIcon = new ImageIcon(getClass().getResource("title.png"));
         Image titleImage = titleIcon.getImage();
         Image scaledTitleImage = titleImage.getScaledInstance(300, 100, Image.SCALE_SMOOTH);
         ImageIcon scaledTitleIcon = new ImageIcon(scaledTitleImage);
@@ -70,14 +70,19 @@ public class MenuUsuario extends JFrame implements ActionListener {
     public void actionPerformed(ActionEvent ae) {
         if (ae.getSource() == nuevoJuegoButton) {
             // Iniciar un nuevo juego
-            JOptionPane.showMessageDialog(this, "Iniciar un nuevo juego", "Nuevo Juego", JOptionPane.INFORMATION_MESSAGE);
+            String playerName = JOptionPane.showInputDialog(null, "Introduce tu nombre:");
+            if (playerName == null || playerName.trim().isEmpty()) {
+                playerName = "Jugador";
+            }
+
             JFrame frame = new JFrame("Space Invaders");
-            SpaceInvaders game = new SpaceInvaders();
+            SpaceInvaders game = new SpaceInvaders(playerName);
             frame.add(game);
             frame.setSize(1200, 650);
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             frame.setResizable(false);
             frame.setVisible(true);
+            this.dispose();
         } else if (ae.getSource() == cargarJuegoButton) {
             // Cargar un juego existente
             JOptionPane.showMessageDialog(this, "Cargar un juego existente", "Cargar Juego", JOptionPane.INFORMATION_MESSAGE);
@@ -97,7 +102,7 @@ public class MenuUsuario extends JFrame implements ActionListener {
         public void paintComponent(Graphics g) {
             super.paintComponent(g);
             // Cargar y dibujar la imagen de fondo
-            imagen = new ImageIcon(getClass().getResource("../imgs/backgroundPrincipal.gif")).getImage();
+            imagen = new ImageIcon(getClass().getResource("backgroundPrincipal.gif")).getImage();
             g.drawImage(imagen, 0, 0, getWidth(), getHeight(), this);
         }
     }

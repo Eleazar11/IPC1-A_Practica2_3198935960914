@@ -3,7 +3,12 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
 package spaceInvaders;
+//Space_Invaders2
 
+/**
+ *
+ * @author 3198935960914 - Eleazar Colop
+ */
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -11,13 +16,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-
-/**
- *
- * @author 3198935960914 - Eleazar Colop
- */
 public class SpaceInvaders extends JPanel implements ActionListener, KeyListener {
     Timer timer;
+    Timer countdownTimer;
+    int countdown = 90;
     List<List<Enemy>> monsterColumns = new ArrayList<>();
     List<Rectangle> mShoots = new ArrayList<>();
     List<Rectangle> pShoots = new ArrayList<>();
@@ -25,21 +27,26 @@ public class SpaceInvaders extends JPanel implements ActionListener, KeyListener
     Image column1Image;
     Image column2And3Image;
     Image column4And5Image;
+    Image explosionImage;
     int playerX = 50;
     int playerY = 225;
     int playerWidth = 41;
     int playerHeight = 41;
     int playerSpeed = 8;
-    int monsterSpeed = 1;
+    int monsterSpeed = 2;
     boolean toDown = true;
     int numPoints = 0;
-    int numLives = 3;
+    int numLives = 10;
     JLabel lives;
     JLabel points;
+    JLabel timeLabel;
     Random random = new Random();
     Thread enemyMovementThread;
+    String playerName;
 
-    public SpaceInvaders() {
+    public SpaceInvaders(String playerName) {
+        this.playerName = playerName;
+
         setLayout(null);
         setBackground(Color.BLACK);
 
@@ -47,8 +54,9 @@ public class SpaceInvaders extends JPanel implements ActionListener, KeyListener
         column1Image = new ImageIcon(getClass().getResource("enemigo1.png")).getImage();
         column2And3Image = new ImageIcon(getClass().getResource("enemigo2.png")).getImage();
         column4And5Image = new ImageIcon(getClass().getResource("enemigo3.png")).getImage();
+        explosionImage = new ImageIcon(getClass().getResource("explosion.gif")).getImage();
 
-        lives = new JLabel("Lives: 3");
+        lives = new JLabel("Lives: 10");
         lives.setForeground(Color.WHITE);
         lives.setBounds(20, 10, 100, 30);
         add(lives);
@@ -58,10 +66,29 @@ public class SpaceInvaders extends JPanel implements ActionListener, KeyListener
         points.setBounds(550, 10, 100, 30);
         add(points);
 
+        timeLabel = new JLabel("Tiempo (s): 90");
+        timeLabel.setForeground(Color.WHITE);
+        timeLabel.setBounds(1000, 10, 200, 30);
+        add(timeLabel);
+
         addMonsters();
 
         timer = new Timer(10, this);
         timer.start();
+
+        countdownTimer = new Timer(1000, e -> {
+            countdown--;
+            timeLabel.setText("Tiempo (s): " + countdown);
+            if (countdown <= 0) {
+                countdownTimer.stop();
+                timer.stop();
+                JOptionPane.showMessageDialog(this, playerName + ", el tiempo ha terminado. Tu puntaje es: " + numPoints);
+                JFrame frame = (JFrame) SwingUtilities.getWindowAncestor(this);
+                frame.dispose(); // Cerrar la ventana del juego
+                new MenuUsuario();
+            }
+        });
+        countdownTimer.start();
 
         setFocusable(true);
         addKeyListener(this);
@@ -92,12 +119,16 @@ public class SpaceInvaders extends JPanel implements ActionListener, KeyListener
         for (int i = 0; i < monsterColumns.size(); i++) {
             List<Enemy> column = monsterColumns.get(i);
             for (Enemy monster : column) {
-                if (i == 0) {
-                    g.drawImage(column1Image, monster.x, monster.y, monster.width, monster.height, this);
-                } else if (i >= 1 && i <= 2) {
-                    g.drawImage(column2And3Image, monster.x, monster.y, monster.width, monster.height, this);
+                if (monster.explosionTime > 0) {
+                    g.drawImage(explosionImage, monster.x, monster.y, monster.width, monster.height, this);
                 } else {
-                    g.drawImage(column4And5Image, monster.x, monster.y, monster.width, monster.height, this);
+                    if (i == 0) {
+                        g.drawImage(column1Image, monster.x, monster.y, monster.width, monster.height, this);
+                    } else if (i >= 1 && i <= 2) {
+                        g.drawImage(column2And3Image, monster.x, monster.y, monster.width, monster.height, this);
+                    } else {
+                        g.drawImage(column4And5Image, monster.x, monster.y, monster.width, monster.height, this);
+                    }
                 }
             }
         }
@@ -126,6 +157,7 @@ public class SpaceInvaders extends JPanel implements ActionListener, KeyListener
 
         updateShoots(mShoots, -2);
         updateShoots(pShoots, playerSpeed);
+        updateExplosions();
         isPlayerDestroyed();
         isMonsterDestroyed();
         isWin();
@@ -148,6 +180,21 @@ public class SpaceInvaders extends JPanel implements ActionListener, KeyListener
             if (shoot.x < 0 || shoot.x > getWidth()) {
                 shoots.remove(i);
                 i--;
+            }
+        }
+    }
+
+    public void updateExplosions() {
+        for (List<Enemy> column : monsterColumns) {
+            for (int j = 0; j < column.size(); j++) {
+                Enemy monster = column.get(j);
+                if (monster.explosionTime > 0) {
+                    monster.explosionTime--;
+                    if (monster.explosionTime <= 0) {
+                        column.remove(j);
+                        j--;
+                    }
+                }
             }
         }
     }
@@ -233,8 +280,8 @@ public class SpaceInvaders extends JPanel implements ActionListener, KeyListener
                                     pShoots.remove(i);
                                     i--;
 
-                                    if (monster.health <= 0) {
-                                        column.remove(j);
+                                    if (monster.health <= 0 && monster.explosionTime <= 0) {
+                                        monster.explosionTime = 50; // 0.5 seconds at 10 ms per update
                                         numPoints += monster.points;
                                         points.setText("Points: " + numPoints);
                                     }
@@ -266,27 +313,35 @@ public class SpaceInvaders extends JPanel implements ActionListener, KeyListener
         return true;
     }
 
-    public void isWin() {
-        boolean allColumnsCleared = true;
-        for (List<Enemy> column : monsterColumns) {
-            if (!column.isEmpty()) {
-                allColumnsCleared = false;
-                break;
-            }
-        }
-
-        if (allColumnsCleared) {
-            timer.stop();
-            JOptionPane.showMessageDialog(this, "You Win!");
+public void isWin() {
+    boolean allColumnsCleared = true;
+    for (List<Enemy> column : monsterColumns) {
+        if (!column.isEmpty()) {
+            allColumnsCleared = false;
+            break;
         }
     }
 
-    public void isLost() {
-        if (numLives <= 0) {
-            timer.stop();
-            JOptionPane.showMessageDialog(this, "You Lost!");
-        }
+    if (allColumnsCleared) {
+        timer.stop();
+        countdownTimer.stop();
+        JOptionPane.showMessageDialog(this, playerName + ", tu puntaje ha sido de " + numPoints);
+        JFrame frame = (JFrame) SwingUtilities.getWindowAncestor(this);
+        frame.dispose(); // Cerrar la ventana del juego
+        new MenuUsuario(); // Volver al menú de usuario
     }
+}
+
+public void isLost() {
+    if (numLives <= 0) {
+        timer.stop();
+        countdownTimer.stop();
+        JOptionPane.showMessageDialog(this, playerName + ", tu puntaje ha sido de " + numPoints);
+        JFrame frame = (JFrame) SwingUtilities.getWindowAncestor(this);
+        frame.dispose(); // Cerrar la ventana del juego
+        new MenuUsuario(); // Volver al menú de usuario
+    }
+}
 
     @Override
     public void keyPressed(KeyEvent e) {
@@ -302,6 +357,16 @@ public class SpaceInvaders extends JPanel implements ActionListener, KeyListener
         }
         if (e.getKeyCode() == KeyEvent.VK_SPACE) {
             pShoots.add(new Rectangle(playerX + playerWidth, playerY + playerHeight / 2 - 10, 30, 20)); // Dispara normalmente
+        }
+        if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+            JFrame frame = (JFrame) SwingUtilities.getWindowAncestor(this);
+            frame.dispose();
+            new MenuUsuario(); // Instancia de la clase MenuUsuario
+            // Aquí deberías mostrar la ventana del menú de usuario
+        }
+        if (e.getKeyCode() == KeyEvent.VK_S) {
+            JOptionPane.showMessageDialog(
+        null, "Serializando en la carpeta -Juegos-...", "SERIALIZANDO", JOptionPane.INFORMATION_MESSAGE);
         }
     }
 
@@ -319,6 +384,7 @@ public class SpaceInvaders extends JPanel implements ActionListener, KeyListener
 
     class Enemy {
         int x, y, width, height, health, points;
+        int explosionTime = 0;
 
         Enemy(int x, int y, int width, int height, int health, int points) {
             this.x = x;
