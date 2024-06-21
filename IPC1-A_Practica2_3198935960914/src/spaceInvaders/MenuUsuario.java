@@ -4,11 +4,21 @@
  */
 package spaceInvaders;
 
-import javax.swing.*;
-import java.awt.*;
+import java.awt.Graphics;
+import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 
+/**
+ *
+ * @author 3198935960914 - Eleazar Colop
+ */
 public class MenuUsuario extends JFrame implements ActionListener {
 
     private JButton nuevoJuegoButton;
@@ -85,10 +95,14 @@ public class MenuUsuario extends JFrame implements ActionListener {
             this.dispose();
         } else if (ae.getSource() == cargarJuegoButton) {
             // Cargar un juego existente
-            JOptionPane.showMessageDialog(this, "Cargar un juego existente", "Cargar Juego", JOptionPane.INFORMATION_MESSAGE);
+            new CargarJuego();
+            // Cerrar el menú de usuario
+             this.dispose();
+            
         } else if (ae.getSource() == puntuacionMaximaButton) {
             // Mostrar la puntuación máxima
-            JOptionPane.showMessageDialog(this, "Mostrar la puntuación máxima", "Puntuación Máxima", JOptionPane.INFORMATION_MESSAGE);
+            new BestPlayers();
+            this.dispose();
         } else if (ae.getSource() == salirButton) {
             // Salir del juego
             System.exit(0);

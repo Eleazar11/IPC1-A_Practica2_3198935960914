@@ -3,19 +3,34 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
 package spaceInvaders;
-//Space_Invaders2
+
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.Image;
+import java.awt.Rectangle;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Random;
+import javax.swing.ImageIcon;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
+import javax.swing.Timer;
 
 /**
  *
  * @author 3198935960914 - Eleazar Colop
  */
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-
 public class SpaceInvaders extends JPanel implements ActionListener, KeyListener {
     Timer timer;
     Timer countdownTimer;
@@ -82,6 +97,7 @@ public class SpaceInvaders extends JPanel implements ActionListener, KeyListener
             if (countdown <= 0) {
                 countdownTimer.stop();
                 timer.stop();
+                savePlayerData(playerName, numPoints);
                 JOptionPane.showMessageDialog(this, playerName + ", el tiempo ha terminado. Tu puntaje es: " + numPoints);
                 JFrame frame = (JFrame) SwingUtilities.getWindowAncestor(this);
                 frame.dispose(); // Cerrar la ventana del juego
@@ -313,35 +329,46 @@ public class SpaceInvaders extends JPanel implements ActionListener, KeyListener
         return true;
     }
 
-public void isWin() {
-    boolean allColumnsCleared = true;
-    for (List<Enemy> column : monsterColumns) {
-        if (!column.isEmpty()) {
-            allColumnsCleared = false;
-            break;
+    public void isWin() {
+        boolean allColumnsCleared = true;
+        for (List<Enemy> column : monsterColumns) {
+            if (!column.isEmpty()) {
+                allColumnsCleared = false;
+                break;
+            }
+        }
+
+        if (allColumnsCleared) {
+            timer.stop();
+            countdownTimer.stop();
+            savePlayerData(playerName, numPoints);
+            JOptionPane.showMessageDialog(this, playerName + ", tu puntaje ha sido de " + numPoints);
+            JFrame frame = (JFrame) SwingUtilities.getWindowAncestor(this);
+            frame.dispose(); // Cerrar la ventana del juego
+            new MenuUsuario(); // Volver al menú de usuario
         }
     }
 
-    if (allColumnsCleared) {
-        timer.stop();
-        countdownTimer.stop();
-        JOptionPane.showMessageDialog(this, playerName + ", tu puntaje ha sido de " + numPoints);
-        JFrame frame = (JFrame) SwingUtilities.getWindowAncestor(this);
-        frame.dispose(); // Cerrar la ventana del juego
-        new MenuUsuario(); // Volver al menú de usuario
+    public void isLost() {
+        if (numLives <= 0) {
+            timer.stop();
+            countdownTimer.stop();
+            savePlayerData(playerName, numPoints);
+            JOptionPane.showMessageDialog(this, playerName + ", tu puntaje ha sido de " + numPoints);
+            JFrame frame = (JFrame) SwingUtilities.getWindowAncestor(this);
+            frame.dispose(); // Cerrar la ventana del juego
+            new MenuUsuario(); // Volver al menú de usuario
+        }
     }
-}
 
-public void isLost() {
-    if (numLives <= 0) {
-        timer.stop();
-        countdownTimer.stop();
-        JOptionPane.showMessageDialog(this, playerName + ", tu puntaje ha sido de " + numPoints);
-        JFrame frame = (JFrame) SwingUtilities.getWindowAncestor(this);
-        frame.dispose(); // Cerrar la ventana del juego
-        new MenuUsuario(); // Volver al menú de usuario
+    private void savePlayerData(String playerName, int score) {
+        try (FileWriter writer = new FileWriter("C:\\Users\\Usuario\\Desktop\\praticas\\IPC1-A_Practica2_3198935960914\\IPC1-A_Practica2_3198935960914\\src\\spaceInvaders\\registroPunteos.csv", true)) {
+            String timestamp = new SimpleDateFormat("HH_mm_dd_MM_yyyy").format(new Date());
+            writer.append(playerName).append(",").append(String.valueOf(score)).append(",").append(timestamp).append("\n");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
-}
 
     @Override
     public void keyPressed(KeyEvent e) {
